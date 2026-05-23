@@ -1,48 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function Home() {
-  const [products, setProducts] = useState([
-    {
-      id: 1,
-      name: "Samsung Galaxy S24",
-      warehouse: "Mumbai",
-      total: 10,
-      reserved: 9,
-    },
-    {
-      id: 2,
-      name: "iPhone 15",
-      warehouse: "Delhi",
-      total: 5,
-      reserved: 5,
-    },
-  ]);
-
+  const [products, setProducts] = useState<any[]>([]);
   const [msg, setMsg] = useState("");
 
-  const reserve = (id: number) => {
-    setProducts((prev) =>
-      prev.map((p) => {
-        if (p.id === id) {
-          const available = p.total - p.reserved;
+  // Load from DB
+  useEffect(() => {
+    fetch("/api/products")
+      .then((res) => res.json())
+      .then((data) => setProducts(data));
+  }, []);
 
-          if (available <= 0) {
-            setMsg("❌ Out of Stock");
-            return p;
-          }
+  // Reserve API
+  const reserve = async (productId: string, warehouseId: string) => {
+    const res = await fetch("/api/reserve", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        productId,
+        warehouseId,
+        quantity: 1,
+      }),
+    });
 
-          setMsg("Reserved Successfully");
+    const data = await res.json();
 
-          return {
-            ...p,
-            reserved: p.reserved + 1,
-          };
-        }
-        return p;
-      })
-    );
+    if (res.ok) {
+      setMsg("Reserved Successfully");
+
+      // refresh data
+      fetch("/api/products")
+        .then((res) => res.json())
+        .then((data) => setProducts(data));
+    } else {
+      setMsg(data.message || "Error");
+    }
 
     setTimeout(() => setMsg(""), 1500);
   };
@@ -54,17 +48,26 @@ export default function Home() {
       {msg && <div style={styles.message}>{msg}</div>}
 
       <div style={styles.grid}>
-        {products.map((p) => {
-          const available = p.total - p.reserved;
+        {products.map((p: any) => {
+          const inventory = p.inventories?.[0];
+
+          const total = inventory?.totalUnits || 0;
+          const reserved = inventory?.reservedUnits || 0;
+          const available = total - reserved;
+
           const isOut = available <= 0;
 
           return (
             <div key={p.id} style={styles.card}>
               <h2 style={styles.productName}>{p.name}</h2>
 
-              <p> Warehouse: {p.warehouse}</p>
-              <p> Total: {p.total}</p>
-              <p> Reserved: {p.reserved}</p>
+              <p>
+                <b>Warehouse:</b>{" "}
+                {inventory?.warehouse?.name || "No warehouse"}
+              </p>
+
+              <p>Total Units: {total}</p>
+              <p>Reserved Units: {reserved}</p>
 
               <p
                 style={{
@@ -76,7 +79,9 @@ export default function Home() {
               </p>
 
               <button
-                onClick={() => reserve(p.id)}
+                onClick={() =>
+                  reserve(p.id, inventory?.warehouseId)
+                }
                 disabled={isOut}
                 style={{
                   ...styles.button,
@@ -94,6 +99,7 @@ export default function Home() {
   );
 }
 
+// Styles
 const styles: any = {
   page: {
     padding: "30px",
@@ -137,5 +143,6 @@ const styles: any = {
     borderRadius: "8px",
     color: "white",
     fontWeight: "bold",
+    width: "100%",
   },
 };
