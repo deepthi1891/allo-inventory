@@ -1,6 +1,10 @@
+"use client";
+
+import { useState } from "react";
+
 export default function HomePage() {
 
-  const products = [
+  const [products, setProducts] = useState([
     {
       inventoryId: 1,
       product: {
@@ -11,7 +15,8 @@ export default function HomePage() {
         name: "Mumbai Warehouse",
         location: "Mumbai",
       },
-      availableUnits: 8,
+      totalUnits: 10,
+      reservedUnits: 2,
     },
     {
       inventoryId: 2,
@@ -23,41 +28,97 @@ export default function HomePage() {
         name: "Delhi Warehouse",
         location: "Delhi",
       },
-      availableUnits: 4,
+      totalUnits: 5,
+      reservedUnits: 1,
     },
-  ];
+  ]);
+
+  const reserveProduct = (inventoryId: number) => {
+
+    setProducts((prev) =>
+      prev.map((item) => {
+
+        if (item.inventoryId === inventoryId) {
+
+          const available =
+            item.totalUnits - item.reservedUnits;
+
+          if (available <= 0) {
+            alert("No stock available");
+            return item;
+          }
+
+          alert("Product Reserved Successfully");
+
+          return {
+            ...item,
+            reservedUnits: item.reservedUnits + 1,
+          };
+        }
+
+        return item;
+      })
+    );
+  };
 
   return (
     <main className="p-10">
+
       <h1 className="text-3xl font-bold mb-6">
         Inventory System
       </h1>
 
       <div className="grid gap-4">
-        {products.map((item) => (
-          <div
-            key={item.inventoryId}
-            className="border p-4 rounded-lg"
-          >
-            <h2 className="text-xl font-semibold">
-              {item.product.name}
-            </h2>
 
-            <p>{item.product.description}</p>
+        {products.map((item) => {
 
-            <p>
-              Warehouse: {item.warehouse.name}
-            </p>
+          const availableUnits =
+            item.totalUnits - item.reservedUnits;
 
-            <p>
-              Available Units: {item.availableUnits}
-            </p>
+          return (
+            <div
+              key={item.inventoryId}
+              className="border p-4 rounded-lg"
+            >
 
-            <button className="mt-3 px-4 py-2 bg-black text-white rounded">
-              Reserve
-            </button>
-          </div>
-        ))}
+              <h2 className="text-xl font-semibold">
+                {item.product.name}
+              </h2>
+
+              <p>{item.product.description}</p>
+
+              <p>
+                Warehouse: {item.warehouse.name}
+              </p>
+
+              <p>
+                Location: {item.warehouse.location}
+              </p>
+
+              <p>
+                Total Units: {item.totalUnits}
+              </p>
+
+              <p>
+                Reserved Units: {item.reservedUnits}
+              </p>
+
+              <p>
+                Available Units: {availableUnits}
+              </p>
+
+              <button
+                onClick={() =>
+                  reserveProduct(item.inventoryId)
+                }
+                className="mt-3 px-4 py-2 bg-black text-white rounded"
+              >
+                Reserve
+              </button>
+
+            </div>
+          );
+        })}
       </div>
     </main>
   );
