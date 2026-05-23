@@ -1,53 +1,38 @@
-export const dynamic = "force-dynamic";
-
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 
 export async function GET() {
-  try {
-
-    const inventories = await prisma.inventory.findMany({
-      include: {
-        product: true,
-        warehouse: true,
-      },
-    });
-
-    const formatted = inventories.map((item) => ({
-      inventoryId: item.id,
-
+  return NextResponse.json([
+    {
+      inventoryId: 1,
       product: {
-        id: item.product.id,
-        name: item.product.name,
-        description: item.product.description,
+        id: 1,
+        name: "Samsung Galaxy S24",
+        description: "Flagship Android Phone",
       },
-
       warehouse: {
-        id: item.warehouse.id,
-        name: item.warehouse.name,
-        location: item.warehouse.location,
+        id: 1,
+        name: "Mumbai Warehouse",
+        location: "Mumbai",
       },
-
-      totalUnits: item.totalUnits,
-      reservedUnits: item.reservedUnits,
-
-      availableUnits:
-        item.totalUnits - item.reservedUnits,
-    }));
-
-    return NextResponse.json(formatted);
-
-  } catch (error) {
-
-    console.error("PRODUCT API ERROR:", error);
-
-    return NextResponse.json(
-      {
-        error: String(error),
+      totalUnits: 10,
+      reservedUnits: 2,
+      availableUnits: 8,
+    },
+    {
+      inventoryId: 2,
+      product: {
+        id: 2,
+        name: "iPhone 15",
+        description: "Apple Smartphone",
       },
-      {
-        status: 500,
-      }
-    );
-  }
+      warehouse: {
+        id: 2,
+        name: "Delhi Warehouse",
+        location: "Delhi",
+      },
+      totalUnits: 5,
+      reservedUnits: 1,
+      availableUnits: 4,
+    },
+  ]);
 }
